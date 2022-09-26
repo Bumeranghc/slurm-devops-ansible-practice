@@ -1,0 +1,59 @@
+---
+# tasks file for postgres
+- name: Install packages
+  ansible.builtin.yum:
+    name:
+      - postgresql
+      - postgresql-server
+      - postgresql-contrib
+      - postgresql-libs
+      - python-psycopg2
+      - python-ipaddress
+    state: present
+
+- name: Check if PostgreSQL is initialized
+  ansible.builtin.stat:
+    path: "/var/lib/pgsql/data/pg_hba.conf"
+  register: "postgres_data"
+
+- name: Initialize PostgreSQL
+  shell: postgresql-setup initdb
+  when: not postgres_data.stat.exists
+
+- name: Start and enable service
+  ansible.builtin.service:
+    name: postgresql
+    state: started
+    enabled: true
+
+- name: "Create a new database"
+  community.postgresql.postgresql_db:
+    name: xpastedb
+  become: true
+  become_user: postgres
+
+- name: "Connect to xpastedb, create xpasteuser user, and grant access to database"
+  community.postgresql.postgresql_user:
+    db: xpastedb
+    name: xpasteuser
+    password: xpastepassword
+    priv: "ALL"
+  become: true
+  become_user: postgres
+
+- name: Allow password connection for the db user
+  community.postgresql.postgresql_pg_hba:
+    dest: "/var/lib/pgsql/data/pg_hba.conf"
+    contype: host
+    databases: all
+    method: password
+    users: "xpasteuser"
+    create: true
+  become: true
+  become_user: postgres
+
+- name: Retart and enable service
+  ansible.builtin.service:
+    name: postgresql
+    state: "reloaded"
+    enabled: true

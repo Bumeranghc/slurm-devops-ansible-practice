@@ -1,0 +1,17 @@
+---
+# tasks file for xpaste
+- name: Install packages
+  ansible.builtin.yum:
+    name:
+      - git
+      - "@Development tools"
+      - libxml2-devel
+      - nodejs
+      - postgresql-devel
+      - ruby-devel
+    state: present
+
+- name: Download xpaste
+  git: 
+    repo: "https://{{ gitlabuser | urlencode }}:{{ gitlabpassword | urlencode }}@gitlab.slurm.io/edu/xpaste_practicum.git"
+    dest: /usr/local/xpaste
