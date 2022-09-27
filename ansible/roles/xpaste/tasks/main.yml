@@ -6,12 +6,55 @@
       - git
       - "@Development tools"
       - libxml2-devel
+      - libxslt-devel
       - nodejs
       - postgresql-devel
       - ruby-devel
     state: present
 
+- name: Get the list of services
+  service_facts:
+
+- name: Stop xpaste service
+  systemd:
+    name: xpaste
+    state: stopped
+  when: "'xpaste.service' in services"
+
 - name: Download xpaste
   git: 
     repo: "https://{{ gitlabuser | urlencode }}:{{ gitlabpassword | urlencode }}@gitlab.slurm.io/edu/xpaste_practicum.git"
     dest: /usr/local/xpaste
+
+- name: Install xpaste
+  shell: |
+    source /etc/profile.d/rvm.sh
+    /usr/local/bin/bundle config build.nokogiri --use-system-libraries
+    /usr/local/bin/bundle install --clean --no-cache --without development --force
+  args:
+    chdir: /usr/local/xpaste
+
+- name: Create systemd service
+  template:
+    src: xpaste.service.j2
+    dest: /lib/systemd/system/xpaste.service
+
+- name: Start xpaste service
+  systemd:
+    name: xpaste
+    state: started
+    enabled: true
+    daemon_reload: true
+
+- name: Copy nginx configuration
+  copy: remote_src=True src=/usr/local/xpaste/config/nginx.conf dest=/etc/nginx/nginx.conf
+
+- name: Copy robots.txt
+  copy: remote_src=True src=/usr/local/xpaste/public/robots.txt dest=/usr/local/xpaste/app/assets/robots.txt
+
+- name: "Update nginx configuration"
+  ansible.builtin.replace: 
+    path: "/etc/nginx/nginx.conf"
+    regexp: '/app/public'
+    replace: '/usr/local/xpaste/app/assets'
+    validate: nginx -c %s -t

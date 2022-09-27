@@ -18,8 +18,6 @@ Vagrant.configure("2") do |config|
     controlnode.vm.network "private_network", ip: "192.168.55.6"
     controlnode.vm.synced_folder "./ansible","/home/vagrant/ansible"
     controlnode.vm.provision "file", source: "files/xpaste", destination: "/home/vagrant/.ssh/"
-    controlnode.vm.provision "file", source: "files/exclude_from_prod.py", destination: "/home/vagrant/"
-    controlnode.vm.provision "file", source: "files/include_to_prod.py", destination: "/home/vagrant/"
     controlnode.vm.provision "shell", inline: <<-SHELL
       sed -i 's/ChallengeResponseAuthentication no/ChallengeResponseAuthentication yes/#g' /etc/ssh/sshd_config
       service ssh restart
