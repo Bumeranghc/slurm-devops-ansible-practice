@@ -33,7 +33,7 @@ Vagrant.configure("2") do |config|
   # boxes at https://vagrantcloud.com/search.
   config.vm.define "xpaste" do |xpaste|
     xpaste.vm.box = "bento/centos-7.5"
-    xpaste.vm.hostname = "server-postgres-master"
+    xpaste.vm.hostname = "xpaste-server"
     xpaste.vbguest.auto_update = false
     xpaste.vm.network "private_network", ip: "192.168.55.7"
     xpaste.vm.provision "shell", inline: <<-SHELL
